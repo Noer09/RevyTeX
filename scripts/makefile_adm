@@ -9,6 +9,7 @@ include .config.mk
 # If there is a plan file, fetch all the lines ending with '.tex' and output them space separated into datadeps
 datadeps := $(shell if [ -f $(plan) ]; then sed -n '/\S*\.tex/p' $(plan) | sed ':b;N;s/\n/ /;bb'; fi)
 pdfdeps := $(subst .tex,.pdf,$(datadeps))
+rehearsaldeps := $(addprefix $(rehearsaldir)/,$(subst .tex,.txt,$(datadeps)))
 
 .PHONY : all clean writable
 
@@ -17,12 +18,13 @@ all:
 ifeq ($(strip $(pdfdeps)),)
 	@$(MAKE) -s --no-print-directory $(subst .tex,.pdf,$(wildcard $(songdir)/*.tex $(sketchdir)/*.tex $(videodir)/*.tex))
 else
-	@$(MAKE) -s --no-print-directory $(manus) $(songs) $(individualdir) $(props) $(signup)
+	@$(MAKE) -s --no-print-directory $(manus) $(songs) $(individualdir) $(props) $(signup) rehearsal
 endif
 
 plan: $(plan)
 pdf: $(pdfdeps)
 manus: $(manus)
+rehearsal: $(rehearsaldir) $(rehearsaldeps)
 %.pdf: name = $(subst .pdf,,$(@F))
 
 # Makes a complete manuscript
@@ -141,6 +143,10 @@ $(songs): $(json) $(scriptdir)/songs.pl $(pdfdeps)
 	@$(scriptdir)/songs.pl .config.mk $(json)
 	@echo ""
 
+$(rehearsaldir):
+	@mkdir -p $(rehearsaldir)/$(sketchdir) $(rehearsaldir)/$(songdir) $(rehearsaldir)/$(videodir)
+	@echo "Disse filer kan importeres ind i Script Rehearser appen (https://scriptrehearser.com) og bruges til øvning.\n\nKonverteringen er ikke perfekt, så filerne skal muligvis justeres en smule." > $(rehearsaldir)/README
+
 public: $(datadeps) $(pdfdeps) $(json) $(acts) $(roles)
 	@mkdir -p $@
 	@cp -t $@ --parents $(datadeps) $(pdfdeps)
@@ -157,6 +163,7 @@ clean :
 	@rm -f $(json)
 	@rm -f $(acts) $(roles) $(props) $(signup) $(manus) $(contacts)
 	@rm -rf $(individualdir)
+	@rm -rf $(rehearsaldir)
 	@echo "OK"
 	@echo ""
 
@@ -179,3 +186,15 @@ $(songdir)/%.pdf: $(songdir)/%.tex
 
 $(videodir)/%.pdf: $(videodir)/%.tex
 	@cd $(videodir) && $(MAKE) -s --no-print-directory $(@F)
+
+$(rehearsaldir)/$(sketchdir)/%.txt: $(sketchdir)/%.tex
+	@echo "\t$@"
+	@$(scriptdir)/rehearsal.pl $(sketchdir)/$(subst .txt,.tex,$(@F)) > $@
+
+$(rehearsaldir)/$(songdir)/%.txt: $(songdir)/%.tex
+	@echo "\t$@"
+	@$(scriptdir)/rehearsal.pl $(songdir)/$(subst .txt,.tex,$(@F)) > $@
+
+$(rehearsaldir)/$(videodir)/%.txt: $(videodir)/%.tex
+	@echo "\t$@"
+	@$(scriptdir)/rehearsal.pl $(videodir)/$(subst .txt,.tex,$(@F)) > $@

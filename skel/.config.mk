@@ -32,3 +32,4 @@ props := $(outputdir)/Rekvisitliste.pdf
 songs := $(outputdir)/Sangmanuskript.pdf
 contacts := $(outputdir)/Kontaktliste.pdf
 individualdir := $(outputdir)/Individuelt
+rehearsaldir := $(outputdir)/Øvefiler
