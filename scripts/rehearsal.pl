@@ -4,6 +4,8 @@ use warnings;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
+binmode STDOUT, ":utf8";
+
 =head1 NAME
 
 reheasal.pl
@@ -23,7 +25,7 @@ unless (-f $texfile) {
     die("Usage: $0 <texfile>.tex > rehearsal-file.txt");
 }
 
-open(my $f, '<', $texfile);
+open(my $f, '<:encoding(utf-8)', $texfile);
 my $data = do { local $/ = undef; <> };
 close($f);
 
